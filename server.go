@@ -3,26 +3,29 @@ package go_web
 import "net/http"
 
 type Server interface {
-	Route(path string, handle func(ctx *Context))
+	Route(method string, path string, handle func(ctx *Context))
 	Run(addr string) error
 }
 
 type defaultServer struct {
+	name     string
+	handlers *HandlerBasedOnMap
 }
 
-func (d *defaultServer) Route(path string, handle func(ctx *Context)) {
-	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		ctx := NewContext(r, w)
-		handle(ctx)
-	})
+func (d *defaultServer) Route(method string, path string, handle func(ctx *Context)) {
+	key := d.handlers.key(method, path)
+
+	// 重复的问题需要处理
+	d.handlers.handlers[key] = handle
 }
 
 func (d *defaultServer) Run(addr string) error {
-	return http.ListenAndServe(addr, nil)
+	return http.ListenAndServe(addr, d.handlers)
 }
 
-var server = &defaultServer{}
-
-func NewServer() Server {
-	return server
+func NewServer(name string) Server {
+	return &defaultServer{
+		name:     name,
+		handlers: NewHandlerBasedOnMap(),
+	}
 }

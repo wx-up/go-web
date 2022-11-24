@@ -28,11 +28,18 @@ func (h *HandlerBasedOnMap) ServeHTTP(writer http.ResponseWriter, request *http.
 
 }
 
+func (h *HandlerBasedOnMap) Route(method string, path string, handleFunc func(*Context)) {
+	key := h.key(method, path)
+
+	// 重复的问题需要处理
+	h.handlers[key] = handleFunc
+}
+
 func (h *HandlerBasedOnMap) key(method string, path string) string {
 	return fmt.Sprintf("%s#%s", method, path)
 }
 
-func NewHandlerBasedOnMap() *HandlerBasedOnMap {
+func NewHandlerBasedOnMap() Handler {
 	return &HandlerBasedOnMap{
 		handlers: make(map[string]func(*Context), 10),
 	}

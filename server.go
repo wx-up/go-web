@@ -8,24 +8,21 @@ type Server interface {
 }
 
 type defaultServer struct {
-	name     string
-	handlers *HandlerBasedOnMap
+	name    string
+	handler Handler
 }
 
 func (d *defaultServer) Route(method string, path string, handle func(ctx *Context)) {
-	key := d.handlers.key(method, path)
-
-	// 重复的问题需要处理
-	d.handlers.handlers[key] = handle
+	d.handler.Route(method, path, handle)
 }
 
 func (d *defaultServer) Run(addr string) error {
-	return http.ListenAndServe(addr, d.handlers)
+	return http.ListenAndServe(addr, d.handler)
 }
 
-func NewServer(name string) Server {
+func NewHttpServer(name string) Server {
 	return &defaultServer{
-		name:     name,
-		handlers: NewHandlerBasedOnMap(),
+		name:    name,
+		handler: NewHandlerBasedOnMap(),
 	}
 }

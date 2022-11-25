@@ -3,7 +3,7 @@ package go_web
 import "net/http"
 
 type Server interface {
-	Route(method string, path string, handle func(ctx *Context))
+	Route(method string, path string, handle HandlerFunc)
 	Run(addr string) error
 }
 
@@ -13,12 +13,17 @@ type defaultServer struct {
 	root    Filter
 }
 
-func (d *defaultServer) Route(method string, path string, handle func(ctx *Context)) {
+func (d *defaultServer) Route(method string, path string, handle HandlerFunc) {
 	d.handler.Route(method, path, handle)
 }
 
 func (d *defaultServer) Run(addr string) error {
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		if _, err := d.handler.Match(request.Method, request.URL.Path); err != nil {
+			writer.WriteHeader(http.StatusNotFound)
+			_, _ = writer.Write([]byte("route not register"))
+			return
+		}
 		ctx := NewContext(request, writer)
 		d.root(ctx)
 	})

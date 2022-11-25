@@ -27,9 +27,7 @@ func (d *defaultServer) Run(addr string) error {
 
 func NewHttpServer(name string, filters ...FilterBuilder) Server {
 	handler := NewHandlerBasedOnMap()
-	root := func(ctx *Context) {
-		handler.ServeHTTP(ctx.W, ctx.R)
-	}
+	root := handler.ServeHTTP
 	for i := len(filters) - 1; i >= 0; i-- {
 		filter := filters[i]
 		root = filter(root)

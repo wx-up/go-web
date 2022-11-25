@@ -10,8 +10,9 @@ type HandlerBasedOnMap struct {
 	handlers map[string]func(*Context)
 }
 
-func (h *HandlerBasedOnMap) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (h *HandlerBasedOnMap) ServeHTTP(ctx *Context) {
 	// 计算 key
+	request, writer := ctx.R, ctx.W
 	key := h.key(request.Method, request.URL.Path)
 
 	// 判断路由是否存在

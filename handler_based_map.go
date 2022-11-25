@@ -39,6 +39,8 @@ func (h *HandlerBasedOnMap) key(method string, path string) string {
 	return fmt.Sprintf("%s#%s", method, path)
 }
 
+var _ Handler = (*HandlerBasedOnMap)(nil)
+
 func NewHandlerBasedOnMap() Handler {
 	return &HandlerBasedOnMap{
 		handlers: make(map[string]func(*Context), 10),

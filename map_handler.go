@@ -14,18 +14,15 @@ type HandlerBasedOnMap struct {
 }
 
 func (h *HandlerBasedOnMap) ServeHTTP(ctx *Context) {
-	// 计算 key
-	request, writer := ctx.R, ctx.W
-
-	handler, err := h.Match(request.Method, request.URL.Path)
+	handler, err := h.Match(ctx.R.Method, ctx.R.URL.Path)
 	if err != nil {
-		writer.WriteHeader(http.StatusNotFound)
-		_, _ = writer.Write([]byte("route not found"))
+		ctx.W.WriteHeader(http.StatusNotFound)
+		_, _ = ctx.W.Write([]byte("route not found"))
 		return
 	}
 
 	// 处理请求
-	handler(NewContext(request, writer))
+	handler(ctx)
 
 }
 

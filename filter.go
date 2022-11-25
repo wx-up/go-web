@@ -5,14 +5,12 @@ import (
 	"time"
 )
 
-type FilterBuilder func(next Filter) Filter
-
-type Filter func(ctx *Context)
+type FilterBuilder func(next HandlerFunc) HandlerFunc
 
 // 检测 MetricFilterBuilder 为 FilterBuilder 类型
 var _ FilterBuilder = MetricFilterBuilder
 
-func MetricFilterBuilder(next Filter) Filter {
+func MetricFilterBuilder(next HandlerFunc) HandlerFunc {
 	return func(ctx *Context) {
 		start := time.Now().Nanosecond()
 		next(ctx)

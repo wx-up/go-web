@@ -10,7 +10,7 @@ type Server interface {
 type defaultServer struct {
 	name    string
 	handler Handler
-	root    Filter
+	root    HandlerFunc
 }
 
 func (d *defaultServer) Route(method string, path string, handle HandlerFunc) {
@@ -32,11 +32,14 @@ func (d *defaultServer) Run(addr string) error {
 
 func NewHttpServer(name string, filters ...FilterBuilder) Server {
 	handler := NewHandlerBasedOnMap()
+
+	// 责任链
 	root := handler.ServeHTTP
 	for i := len(filters) - 1; i >= 0; i-- {
 		filter := filters[i]
 		root = filter(root)
 	}
+
 	return &defaultServer{
 		name:    name,
 		handler: handler,

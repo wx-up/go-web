@@ -32,15 +32,37 @@ func (s *HandlerBasedOnTree) ServeHTTP(ctx *Context) {
 }
 
 func (s *HandlerBasedOnTree) Route(method string, path string, handleFunc HandlerFunc) {
+	path = strings.Trim(path, "/")
+	if err := s.validatePattern(path); err != nil {
+		panic(err)
+	}
 	s.root.addRoute(path, handleFunc)
 }
 
 func (s *HandlerBasedOnTree) Match(method string, path string) (HandlerFunc, error) {
+	path = strings.Trim(path, "/")
 	return s.root.matchRoute(path)
 }
 
+var ErrInvalidRouterPattern = errors.New("invalid router pattern")
+
+func (s *HandlerBasedOnTree) validatePattern(path string) error {
+	// 当存在 * 的时候，它必须是最后一个，并且前面必须是 /
+	pos := strings.Index(path, "*")
+	if pos < 0 {
+		return nil
+	}
+	if pos != len(path)-1 {
+		return ErrInvalidRouterPattern
+	}
+
+	if pos != 0 && path[pos-1] != '/' {
+		return ErrInvalidRouterPattern
+	}
+	return nil
+}
+
 func (n *node) matchRoute(path string) (HandlerFunc, error) {
-	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 	current := n
 	for _, segment := range segments {
@@ -59,7 +81,6 @@ func (n *node) matchRoute(path string) (HandlerFunc, error) {
 }
 
 func (n *node) addRoute(path string, handleFunc HandlerFunc) {
-	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 
 	currentNode := n
@@ -77,11 +98,24 @@ func (n *node) addRoute(path string, handleFunc HandlerFunc) {
 }
 
 func (n *node) matchChildNode(segment string) (*node, error) {
+	var selectNode *node
 	for _, child := range n.children {
-		if child.segment == segment {
+		// 精确匹配
+		if child.segment == segment && child.segment != "*" {
 			return child, nil
 		}
+
+		// 如果 segment 为 * 则缓存当前 node，继续匹配，可能有精确的 segment 可以匹配
+		if child.segment == "*" {
+			selectNode = child
+		}
 	}
+
+	// 说明只有通配符匹配上了
+	if selectNode != nil {
+		return selectNode, nil
+	}
+
 	return nil, errors.New("node not found")
 }
 
